@@ -1,19 +1,23 @@
 # NETScratch for Linux
 一个普通的多线程局域网 IP 扫描工具
 
+> **当前版本：1.0-beta（测试版）**
+> 本项目仍处于测试阶段，功能、接口与兼容性都可能随时调整，暂不建议用于生产环境。
+> 目前仅完成 Debian 系与红帽系的安装包适配；**Arch 系与 SUSE 系尚未适配**（无 pacman 包，RPM 也未在 SUSE 上验证），如需使用请参照下方依赖自行编译运行。
+
 ## 软件由来
 作者闲着没事干用 AI 做出来的东西<br>
 （作者 PS：其实网上有很多比我这个做的更好的工具了，我做这个纯属白搭）
 
 ## 支持系统
-已适配四大发行版家族与主流桌面环境：
+目标覆盖四大发行版家族与主流桌面环境（其中 Arch 系、SUSE 系目前只保证源码编译运行，安装包适配中）：
 
-| 发行版家族 | 代表发行版 |
-| --- | --- |
-| Debian 系 | Debian、Ubuntu、Linux Mint、Deepin、Kali |
-| 红帽系 | RHEL、CentOS、Rocky、AlmaLinux、Fedora、openEuler |
-| Arch 系 | Arch Linux、Manjaro、EndeavourOS |
-| SUSE 系 | openSUSE Leap / Tumbleweed、SUSE Linux Enterprise |
+| 发行版家族 | 代表发行版 | 安装包 |
+| --- | --- | --- |
+| Debian 系 | Debian、Ubuntu、Linux Mint、Deepin、Kali | `.deb` |
+| 红帽系 | RHEL、CentOS、Rocky、AlmaLinux、Fedora、openEuler | `.rpm` |
+| Arch 系 | Arch Linux、Manjaro、EndeavourOS | 未适配 |
+| SUSE 系 | openSUSE Leap / Tumbleweed、SUSE Linux Enterprise | 未适配 |
 
 - 桌面环境：GNOME、KDE Plasma、XFCE、MATE、Cinnamon、LXQt 等（X11 会话，或在 Wayland 会话下经 XWayland 运行）。
 - 界面字体自动从系统已安装的中文字体中挑选（Noto Sans CJK / 思源黑体 / 文泉驿等），并按需回退。
@@ -104,9 +108,12 @@ glibc、libstdc++、libgcc_s 以及显卡/驱动相关库（libGL / libEGL / lib
 > 若系统未安装 XWayland，可执行 `sudo apt install xwayland`（对应各发行版包名安装）。
 
 ## 生成安装包（deb / rpm）
-在 `release/` 基础上可进一步产出 `.deb`（Debian 系）与 `.rpm`（红帽 / SUSE 系）安装包。
+在 `release/` 基础上可进一步产出 `.deb`（Debian 系）与 `.rpm`（红帽系）安装包。
 安装包同样**自包含**：把 `release/` 里的全部 Qt 运行库与插件一并装入 `/opt/NETScratch`，
 运行期只需系统提供 `nmap` / `ping` / `ip` 三个外部命令。
+
+> 当前 1.0-beta 仅在 Debian 系与红帽系上验证过；SUSE 系与 Arch 系尚未适配
+> （SUSE 可尝试直接安装 `.rpm`，但未做验证；Arch 无 pacman 包）。
 
 ```bash
 # 生成 .deb（自动先执行 deploy 生成 release/）
@@ -125,9 +132,11 @@ ls packages/
 # Debian / Ubuntu / Deepin / Kali ...
 sudo apt install ./packages/netscratch_*_amd64.deb
 
-# 红帽系 / openSUSE ...
-sudo dnf install ./packages/netscratch-*.rpm      # 红帽系
-sudo zypper install ./packages/netscratch-*.rpm   # SUSE 系
+# 红帽系
+sudo dnf install ./packages/netscratch-*.rpm
+
+# SUSE 系（尚未适配，可尝试，未做验证）
+sudo zypper install ./packages/netscratch-*.rpm
 ```
 
 安装后从应用菜单启动「NETScratch」，或命令行执行 `netscratch`。包内布局：
@@ -160,6 +169,6 @@ sudo zypper install ./packages/netscratch-*.rpm   # SUSE 系
 
 ## 结尾
 
-有建议或 bug：[提 issues](https://gitee.com/kaixuanstudio/NETScratch-for-Windows/issues)<br>
+有建议或 bug：[提 issues](https://gitee.com/kaixuanstudio/NETScratch-for-Linux/issues)<br>
 不喜勿喷<br>
 本人是真的不太会编程
