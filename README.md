@@ -12,8 +12,6 @@
 | --- | --- |
 | Debian 系 | Debian、Ubuntu、Linux Mint、Deepin、Kali |
 | 红帽系 | RHEL、CentOS、Rocky、AlmaLinux、Fedora、openEuler |
-| Arch 系 | Arch Linux、Manjaro、EndeavourOS |
-| SUSE 系 | openSUSE Leap / Tumbleweed、SUSE Linux Enterprise |
 
 - 桌面环境：GNOME、KDE Plasma、XFCE、MATE、Cinnamon、LXQt 等（X11 会话，或在 Wayland 会话下经 XWayland 运行）。
 - 界面字体自动从系统已安装的中文字体中挑选（Noto Sans CJK / 思源黑体 / 文泉驿等），并按需回退。
@@ -154,9 +152,16 @@ sudo zypper install ./packages/netscratch-*.rpm   # SUSE 系
 不随本程序分发，请在目标机上自行安装，版权归 nmap 项目所有。
 
 ## 软件截图（Windows 版界面，Linux 版布局一致）
-<img width="1920" height="1032" alt="图片" src="https://github.com/user-attachments/assets/e8a16141-37f3-4572-bc7f-21ecac421760" />
-<img width="1920" height="1032" alt="图片" src="https://github.com/user-attachments/assets/308ca8cf-1a1e-492c-a66d-282b59351789" />
-<img width="1920" height="1032" alt="图片" src="https://github.com/user-attachments/assets/4b3722c2-96d7-4c48-a514-b1500155ec6a" />
+演示系统：Debian 13.6.0+GNOME 48和Rocky 9+KDE 5.27.12
+Debian+GNOME
+<img width="1720" height="952" alt="图片" src="https://github.com/user-attachments/assets/059e2d62-395f-4b5e-9743-d49990f3c6ca" />
+<img width="1720" height="952" alt="图片" src="https://github.com/user-attachments/assets/a33c434b-d4dd-4acd-bf2f-ca3b1e39a0e0" />
+<img width="1720" height="952" alt="图片" src="https://github.com/user-attachments/assets/14df0e98-29f1-4045-8b0a-242dde7d984e" />
+Rocky+KDE
+<img width="1720" height="952" alt="图片" src="https://github.com/user-attachments/assets/9676fa99-6ed6-4a04-a632-00adfe371d1f" />
+<img width="1720" height="952" alt="图片" src="https://github.com/user-attachments/assets/00df783b-5004-4ef5-8f7f-0675570cce3a" />
+<img width="1720" height="952" alt="图片" src="https://github.com/user-attachments/assets/882d0074-0163-4dab-a0de-6f7360fe1a23" />
+
 
 ## 结尾
 
