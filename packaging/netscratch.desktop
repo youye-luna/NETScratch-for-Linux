@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=NETScratch
+GenericName=LAN Scanner
+GenericName[zh_CN]=局域网扫描
+Comment=多线程局域网 IP 扫描工具
+Comment[zh_CN]=多线程局域网 IP 扫描工具
+Exec=netscratch
+Icon=netscratch
+Terminal=false
+Categories=Network;Utility;Security;
+Keywords=lan;scanner;network;ip;nmap;
+StartupNotify=true

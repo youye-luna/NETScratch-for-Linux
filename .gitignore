@@ -1,0 +1,29 @@
+## Build output
+build/
+build-*/
+release/
+packages/
+
+## CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CMakeUserPresets.json
+
+## IDE
+.idea/
+.vscode/
+*.user
+.cache/
+compile_commands.json
+
+## OS
+.DS_Store
+
+## App runtime
+settings.json
+ScanHistory/
+
+## Debug logs
+.dbg/
+debug-*.md

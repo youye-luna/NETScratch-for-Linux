@@ -1,0 +1,65 @@
+#pragma once
+
+#include <QByteArray>
+#include <QHash>
+#include <QString>
+#include <QVector>
+
+/// 底层网络工具（ICMP / TCP / ARP / 本机信息 / 反向 DNS）
+namespace NetUtils
+{
+/// IPv4 字符串转 32 位数值，失败返回 -1
+qint64 ipToLong(const QString &ip);
+
+/// 32 位数值转 IPv4 字符串
+QString longToIp(qint64 value);
+
+/// 是否为内网地址（10.x / 172.16-31.x / 192.168.x）
+bool isPrivateIp(const QString &ip);
+
+/// ICMP 探测：成功返回 true 并写入往返毫秒数
+bool icmpPing(const QString &ip, int timeoutMs, qint64 *roundTripMs);
+
+/// 与指定 TCP 端口做一次短交互：连接后发送 request，读到无数据或超时为止。
+/// 连接/发送失败返回空。用于 RTSP、HTTP、UPnP 等文本协议的一次性握手。
+QByteArray tcpExchange(const QString &ip, int port, const QByteArray &request, int budgetMs);
+
+/// 读取内核 ARP 表（/proc/net/arp），返回 IP -> MAC（AA-BB-CC-DD-EE-FF 大写）
+QHash<QString, QString> readArpTable(int timeoutMs = 1500);
+
+/// 查询单条 ARP 记录，失败返回空
+QString queryArpEntry(const QString &ip, int timeoutMs = 1000);
+
+/// MAC 归一化为 AA-BB-CC-DD-EE-FF（大写），非法返回空
+QString formatMac(const QString &raw);
+
+/// 本机网卡（名称 / IPv6 接口索引 / IPv4），用于定位扫描网段所在网卡
+struct LocalInterface
+{
+    QString name;        ///< 网卡友好名称（Linux 下即接口名，如 eth0 / wlan0 / enp3s0）
+    int index = -1;      ///< IPv6 接口索引（ping -6 ... %index 使用）
+    QString ipv4;        ///< 该网卡第一个非回环 IPv4
+    QString adapterName; ///< Linux 网络接口名（eth0 / wlan0 …），用于拼 ping -6 %name 与 nmap -e
+};
+
+/// 枚举本机已启用且配置了 IPv4 的网卡
+QVector<LocalInterface> localInterfaces();
+
+/// 向 ff02::1 发一次 ICMPv6 回显，促使系统补齐 NDP 邻居表（按接口索引定位接口名）
+void primeIpv6Neighbors(int interfaceIndex);
+
+/// IPv6 邻居表：MAC(AA-BB-CC-DD-EE-FF 大写) -> 链路本地 fe80:: 地址（读 ip -6 neigh）
+QHash<QString, QString> readIpv6Neighbors(int timeoutMs = 3000);
+
+/// 本机物理网卡 MAC（AA-BB-CC-DD-EE-FF 大写），失败返回空
+QString localMacAddress();
+
+/// 默认网关 IPv4，失败返回空
+QString defaultGatewayIp();
+
+/// 本机第一个非回环 IPv4，失败返回空
+QString localIpv4Address();
+
+/// 带超时的反向 DNS 解析，失败/超时返回空
+QString resolveHostName(const QString &ip, int timeoutMs);
+} // namespace NetUtils

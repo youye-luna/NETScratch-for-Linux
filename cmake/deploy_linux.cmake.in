@@ -1,0 +1,127 @@
+# ============================================================================
+# 本文件为模板，由 CMakeLists.txt 通过 configure_file() 生成到构建目录，
+# 并在 `cmake --install`（即 `make deploy`）阶段执行。
+#
+# 目标：把一个「可执行文件 + 全部 Qt 运行库与插件 + 系统依赖库」的完整目录
+#       部署到 release/，可直接拷贝到任意主流 Linux 发行版运行，无需安装 Qt。
+# ============================================================================
+
+set(_release "${CMAKE_INSTALL_PREFIX}")
+set(_app "${_release}/NETScratch")
+set(_qt_libs "@QT_LIBS_DIR@")
+set(_qt_plugins "@QT_PLUGINS_DIR@")
+
+message(STATUS "[deploy] 输出目录: ${_release}")
+
+# 仅当可执行文件已安装到目标前缀时才执行；安装包（bundle 组件）流程会跳过本脚本
+if(NOT EXISTS "${_app}")
+    message(STATUS "[deploy] 未发现 ${_app}，跳过依赖收集（非 runtime 组件安装）")
+    return()
+endif()
+
+# ---- 1. 清理上一次残留的旧产物，避免与当前运行库混淆 ----------------------
+file(GLOB _stale_files "${_release}/*.dll" "${_release}/*.exe")
+if(_stale_files)
+    file(REMOVE ${_stale_files})
+    message(STATUS "[deploy] 已清理 ${_release} 下残留的旧产物")
+endif()
+
+# ---- 2. 拷贝 Qt 插件（存在才拷，兼容各发行版不同的插件集合）---------------
+# platforms         : 必需。libqxcb.so 提供 X11 / XWayland 平台后端，
+#                     GNOME、KDE、XFCE、MATE、Cinnamon、LXQt 等均可运行。
+# platformthemes    : libqgtk3.so，让 Qt 跟随 GTK 主题（GNOME/XFCE 下外观更原生）。
+# styles            : libqgtk3.so，GTK 原生控件风格。
+# imageformats      : ico/jpeg/gif/svg/webp/tiff 解码（窗口图标为 .ico）。
+# iconengines       : svg 图标支持。
+# xcbglintegrations : X11 下的 OpenGL 集成。
+set(_plugin_map
+    "platforms:libqxcb.so"
+    "platformthemes:libqgtk3.so"
+    "styles:libqgtk3.so"
+    "imageformats:libqico.so,libqjpeg.so,libqgif.so,libqsvg.so,libqtiff.so,libqwebp.so"
+    "iconengines:libqsvgicon.so"
+    "xcbglintegrations:libqxcb-glx-integration.so,libqxcb-egl-integration.so"
+)
+
+set(_bundled_plugins "")
+foreach(_entry IN LISTS _plugin_map)
+    string(REPLACE ":" ";" _entry "${_entry}")
+    list(GET _entry 0 _subdir)
+    list(GET _entry 1 _names)
+    string(REPLACE "," ";" _names "${_names}")
+    foreach(_name IN LISTS _names)
+        if(EXISTS "${_qt_plugins}/${_subdir}/${_name}")
+            file(MAKE_DIRECTORY "${_release}/${_subdir}")
+            # 解析符号链接后拷实体文件并保留插件原名，避免断链
+            file(REAL_PATH "${_qt_plugins}/${_subdir}/${_name}" _plugin_real)
+            file(COPY_FILE "${_plugin_real}" "${_release}/${_subdir}/${_name}"
+                 ONLY_IF_DIFFERENT)
+            list(APPEND _bundled_plugins "${_release}/${_subdir}/${_name}")
+        endif()
+    endforeach()
+endforeach()
+list(REMOVE_DUPLICATES _bundled_plugins)
+list(LENGTH _bundled_plugins _n_plugins)
+message(STATUS "[deploy] 已拷贝 Qt 插件: ${_n_plugins} 个")
+
+# ---- 3. 递归收集运行库依赖 ------------------------------------------------
+# 只收集「非系统关键」库：glibc 家族、libstdc++、libgcc_s 以及显卡/驱动库
+# 必须使用目标系统自带版本（强行打包会与内核/驱动不匹配）；其余如 libicu、
+# libxcb-*、libxkbcommon、libpng、libharfbuzz 等一并打包进 release。
+file(GET_RUNTIME_DEPENDENCIES
+    EXECUTABLES "${_app}" ${_bundled_plugins}
+    DIRECTORIES
+        "${_release}"
+        "${_qt_libs}"
+        "/usr/lib" "/usr/lib64" "/lib" "/lib64"
+        "/usr/lib/x86_64-linux-gnu" "/lib/x86_64-linux-gnu"
+        "/usr/lib/aarch64-linux-gnu" "/lib/aarch64-linux-gnu"
+        "/usr/local/lib"
+    RESOLVED_DEPENDENCIES_VAR _deps
+    UNRESOLVED_DEPENDENCIES_VAR _unresolved
+    CONFLICTING_DEPENDENCIES_PREFIX _conflict
+    POST_EXCLUDE_REGEXES
+        ".*/ld-linux.*"
+        ".*/libc[.]so.*"
+        ".*/libm[.]so.*"
+        ".*/libdl[.]so.*"
+        ".*/libpthread[.]so.*"
+        ".*/librt[.]so.*"
+        ".*/libgcc_s[.]so.*"
+        ".*/libstdc[+][+][.]so.*"
+        ".*/libGL[.]so.*" ".*/libGLX.*" ".*/libEGL.*"
+        ".*/libGLdispatch.*" ".*/libOpenGL.*" ".*/libGLESv2.*" ".*/libGLESv1_CM.*"
+        ".*/libdrm.*" ".*/libgbm.*" ".*/libglapi.*"
+        ".*/libnvidia.*" ".*/libcuda.*" ".*/libvulkan.*"
+)
+
+# ---- 4. 拷贝依赖库到 release 根目录（按文件名去重）------------------------
+# 关键：GET_RUNTIME_DEPENDENCIES 返回的多为带 SONAME 的符号链接
+# （如 libQt5Core.so.5 -> libQt5Core.so.5.15.18）。这里解析链接后按 SONAME 名
+# 拷贝实体文件，既保证加载器能找到，又避免符号链接在拷贝过程中失效。
+# 这样 release 目录可整体拷贝到任意发行版直接运行。
+set(_copied 0)
+set(_seen "")
+foreach(_dep IN LISTS _deps)
+    # 用 list(FIND) 而非 IN_LIST：后者受策略 CMP0057 影响，较老的 CMake（如 3.31）默认不启用
+    list(FIND _seen "${_dep}" _dep_idx)
+    if(NOT _dep_idx EQUAL -1)
+        continue()
+    endif()
+    list(APPEND _seen "${_dep}")
+    get_filename_component(_dep_name "${_dep}" NAME)
+    if(EXISTS "${_release}/${_dep_name}")
+        continue()
+    endif()
+    file(REAL_PATH "${_dep}" _dep_real)
+    file(COPY_FILE "${_dep_real}" "${_release}/${_dep_name}" ONLY_IF_DIFFERENT)
+    math(EXPR _copied "${_copied} + 1")
+endforeach()
+message(STATUS "[deploy] 已拷贝运行库: ${_copied} 个")
+
+if(_unresolved)
+    list(REMOVE_DUPLICATES _unresolved)
+    message(WARNING "[deploy] 以下依赖未能自动定位，请确认目标系统已安装:\n  ${_unresolved}")
+endif()
+
+message(STATUS "[deploy] 完成。运行: cd ${_release} && ./NETScratch")

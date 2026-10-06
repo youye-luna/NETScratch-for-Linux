@@ -1,0 +1,5 @@
+#!/bin/sh
+# NETScratch 启动器：调用自包含运行目录中的可执行文件
+# 安装包把全部 Qt 运行库与插件放在 /opt/NETScratch，无需系统安装 Qt。
+APPDIR="/opt/NETScratch"
+exec "$APPDIR/NETScratch" "$@"
