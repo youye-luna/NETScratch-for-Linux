@@ -165,6 +165,6 @@ Rocky+KDE
 
 ## 结尾
 
-有建议或 bug：[提 issues](https://gitee.com/kaixuanstudio/NETScratch-for-Windows/issues)<br>
+有建议或 bug：提 issues
 不喜勿喷<br>
 本人是真的不太会编程
